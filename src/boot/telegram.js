@@ -1,4 +1,4 @@
-export default ({ router }) => {
+export default async ({ router }) => {
   const tg = window.Telegram?.WebApp
 
   if (!tg) {
@@ -18,6 +18,9 @@ export default ({ router }) => {
 
   const match = startParam?.match(/^battle_(\d+)$/)
   if (match) {
+    // Without this, our replace() can race the router's own initial
+    // navigation and get silently overwritten back to "/".
+    await router.isReady()
     router.replace(`/join/${match[1]}`)
   }
 }
