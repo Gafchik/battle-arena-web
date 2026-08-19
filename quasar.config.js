@@ -12,6 +12,7 @@ export default defineConfig((/* ctx */) => {
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
     boot: [
+      'telegram',
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
@@ -65,7 +66,13 @@ export default defineConfig((/* ctx */) => {
     devServer: {
       // vueDevtools: true,
       // https: true,
-      open: true // opens browser window automatically
+      open: true, // opens browser window automatically
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:8010',
+          changeOrigin: true,
+        },
+      },
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework
