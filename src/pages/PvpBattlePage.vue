@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { api } from '@/services/api'
 import HpBar from '@/components/HpBar.vue'
 import ZonePicker from '@/components/ZonePicker.vue'
 import RoundLogEntry from '@/components/RoundLogEntry.vue'
+import { myTelegramUser } from '@/services/telegramUser'
 
 const props = defineProps({ id: { type: String, required: true } })
 
@@ -11,7 +12,10 @@ const battle = ref(null)
 const rounds = ref([])
 const submitting = ref(false)
 const error = ref(null)
+const secondsLeft = ref(null)
+const me = myTelegramUser()
 let pollTimer = null
+let tickTimer = null
 
 async function refresh() {
   const data = await api.getBattle(props.id)
@@ -32,9 +36,22 @@ async function onSubmit(move) {
   }
 }
 
+function updateCountdown() {
+  if (!battle.value?.round_deadline_at) {
+    secondsLeft.value = null
+    return
+  }
+  const ms = new Date(battle.value.round_deadline_at).getTime() - Date.now()
+  secondsLeft.value = Math.max(0, Math.ceil(ms / 1000))
+}
+
+watch(() => battle.value?.round_deadline_at, updateCountdown)
+
 const yourHp = computed(() => (battle.value?.your_side === 'a' ? battle.value.a_hp : battle.value?.b_hp))
 const oppHp = computed(() => (battle.value?.your_side === 'a' ? battle.value?.b_hp : battle.value?.a_hp))
 const youWon = computed(() => battle.value?.winner === battle.value?.your_side)
+const oppName = computed(() => battle.value?.opponent?.first_name ?? 'Соперник')
+const oppPhoto = computed(() => battle.value?.opponent?.photo_url ?? null)
 
 // RoundLogEntry always treats "a_*" fields as "you" — swap when you're actually side B.
 const roundsFromYourView = computed(() => {
@@ -57,51 +74,60 @@ const roundsFromYourView = computed(() => {
 onMounted(() => {
   refresh()
   pollTimer = setInterval(refresh, 1500)
+  tickTimer = setInterval(updateCountdown, 1000)
 })
 
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
+  if (tickTimer) clearInterval(tickTimer)
 })
 </script>
 
 <template>
-  <q-page class="q-pa-md">
+  <q-page class="q-pa-md column no-wrap" style="height: 100vh; box-sizing: border-box">
     <div v-if="!battle" class="text-center q-pa-xl">
       <q-spinner size="40px" color="primary" />
     </div>
 
     <template v-else>
-      <div class="row q-col-gutter-md q-mb-md">
+      <div class="col-auto row q-col-gutter-md q-mb-md">
         <div class="col-6">
-          <HpBar label="Ты" :hp="yourHp" color="primary" />
+          <HpBar label="Ты" :photo-url="me.photoUrl" :hp="yourHp" color="primary" />
         </div>
         <div class="col-6">
-          <HpBar label="Соперник" :hp="oppHp" color="negative" />
+          <HpBar :label="oppName" :photo-url="oppPhoto" :hp="oppHp" color="negative" />
         </div>
       </div>
 
       <div
         v-if="battle.status === 'completed'"
-        class="text-h6 text-center q-mb-md"
+        class="col-auto text-h6 text-center q-mb-md"
         :class="youWon ? 'text-positive' : battle.winner === 'forfeit_both' ? 'text-grey' : 'text-negative'"
       >
         {{ battle.winner === 'forfeit_both' ? '😴 Оба не успели сходить — обоюдное поражение' : youWon ? '🏆 Победа!' : '💀 Поражение' }}
       </div>
 
-      <div v-if="error" class="text-negative q-mb-md">{{ error }}</div>
+      <div v-if="error" class="col-auto text-negative q-mb-md">{{ error }}</div>
 
-      <template v-if="battle.status === 'in_progress'">
-        <div v-if="battle.my_pending_submitted" class="text-center text-grey q-pa-md">
-          Ход принят, ждём соперника...
-        </div>
-        <ZonePicker v-else :disabled="submitting" @submit="onSubmit" />
-      </template>
+      <div class="col-auto">
+        <template v-if="battle.status === 'in_progress'">
+          <div v-if="secondsLeft !== null" class="text-center text-caption text-grey q-mb-xs">
+            ⏱ {{ secondsLeft }} сек на ход
+          </div>
+          <div v-if="battle.my_pending_submitted" class="text-center text-grey q-pa-md">
+            Ход принят, ждём соперника...
+          </div>
+          <ZonePicker v-else :disabled="submitting" @submit="onSubmit" />
+        </template>
 
-      <q-btn v-else color="primary" label="В меню" to="/" class="full-width q-mb-md" />
+        <q-btn v-else color="primary" label="На главную" to="/" class="full-width q-mb-md" />
+      </div>
 
-      <q-list v-if="rounds.length" bordered class="q-mt-md">
-        <RoundLogEntry v-for="r in roundsFromYourView" :key="r.round" :round="r" youLabel="Ты" oppLabel="Соперник" />
-      </q-list>
+      <div class="col q-mt-md" style="min-height: 0; overflow-y: auto">
+        <q-list v-if="rounds.length" bordered>
+          <RoundLogEntry v-for="r in roundsFromYourView" :key="r.round" :round="r" youLabel="Ты" :oppLabel="oppName" />
+        </q-list>
+      </div>
     </template>
   </q-page>
 </template>

@@ -30,5 +30,6 @@ export const api = {
   startTraining: () => request('/battles/training', { method: 'POST' }),
   challenge: () => request('/battles/challenge', { method: 'POST' }),
   joinBattle: (id) => request(`/battles/${id}/join`, { method: 'POST' }),
+  cancelChallenge: (id) => request(`/battles/${id}/cancel`, { method: 'POST' }),
   submitMove: (battleId, move) => request(`/battles/${battleId}/move`, { method: 'POST', body: move }),
 }

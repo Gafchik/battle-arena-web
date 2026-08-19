@@ -8,6 +8,7 @@ const BOT_USERNAME = 'pvp_battle_arena_bot'
 const router = useRouter()
 const battleId = ref(null)
 const creating = ref(false)
+const cancelling = ref(false)
 const error = ref(null)
 let pollTimer = null
 
@@ -41,6 +42,18 @@ function shareLink() {
   window.Telegram?.WebApp?.openTelegramLink(shareUrl)
 }
 
+async function cancelChallenge() {
+  cancelling.value = true
+  try {
+    await api.cancelChallenge(battleId.value)
+    if (pollTimer) clearInterval(pollTimer)
+    router.replace('/')
+  } catch (e) {
+    error.value = e.message
+    cancelling.value = false
+  }
+}
+
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
 })
@@ -58,6 +71,8 @@ onUnmounted(() => {
       <q-btn color="positive" label="Отправить в Telegram" @click="shareLink" />
       <q-spinner color="primary" size="32px" />
       <div class="text-caption text-grey">Ждём соперника...</div>
+      <q-btn flat color="negative" label="Отменить вызов" :loading="cancelling" @click="cancelChallenge" />
+      <div v-if="error" class="text-negative">{{ error }}</div>
     </template>
   </q-page>
 </template>
