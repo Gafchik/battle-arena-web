@@ -1,4 +1,6 @@
-export default async ({ router }) => {
+import { START_LOCATION } from 'vue-router'
+
+export default ({ router }) => {
   const tg = window.Telegram?.WebApp
 
   if (!tg) {
@@ -17,10 +19,20 @@ export default async ({ router }) => {
   const startParam = fromSdk || fromQuery
 
   const match = startParam?.match(/^battle_(\d+)$/)
-  if (match) {
-    // Without this, our replace() can race the router's own initial
-    // navigation and get silently overwritten back to "/".
-    await router.isReady()
-    router.replace(`/join/${match[1]}`)
-  }
+  if (!match) return
+
+  const target = `/join/${match[1]}`
+
+  // Redirect only the very first navigation (from === START_LOCATION), and do
+  // it as a guard rather than an early router.replace() — replace() before
+  // the router's initial navigation resolves gets silently overwritten, and
+  // awaiting router.isReady() here deadlocks (Quasar's boot phase blocks the
+  // app mount that isReady() is itself waiting on).
+  router.beforeEach((to, from, next) => {
+    if (from === START_LOCATION && to.path !== target) {
+      next(target)
+    } else {
+      next()
+    }
+  })
 }
