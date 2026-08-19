@@ -9,7 +9,13 @@ export default ({ router }) => {
   tg.ready()
   tg.expand()
 
-  const startParam = tg.initDataUnsafe?.start_param
+  // Different Telegram clients deliver the startapp payload differently:
+  // mobile via initDataUnsafe.start_param, desktop via a ?tgWebAppStartParam=
+  // query param on the page URL itself. Check both.
+  const fromSdk = tg.initDataUnsafe?.start_param
+  const fromQuery = new URLSearchParams(window.location.search).get('tgWebAppStartParam')
+  const startParam = fromSdk || fromQuery
+
   const match = startParam?.match(/^battle_(\d+)$/)
   if (match) {
     router.replace(`/join/${match[1]}`)
