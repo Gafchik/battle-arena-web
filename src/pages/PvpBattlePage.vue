@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { api } from '@/services/api'
 import HpBar from '@/components/HpBar.vue'
 import ZonePicker from '@/components/ZonePicker.vue'
+import RoundLogEntry from '@/components/RoundLogEntry.vue'
 
 const props = defineProps({ id: { type: String, required: true } })
 
@@ -35,6 +36,24 @@ const yourHp = computed(() => (battle.value?.your_side === 'a' ? battle.value.a_
 const oppHp = computed(() => (battle.value?.your_side === 'a' ? battle.value?.b_hp : battle.value?.a_hp))
 const youWon = computed(() => battle.value?.winner === battle.value?.your_side)
 
+// RoundLogEntry always treats "a_*" fields as "you" — swap when you're actually side B.
+const roundsFromYourView = computed(() => {
+  if (battle.value?.your_side !== 'b') return [...rounds.value].reverse()
+  return [...rounds.value].reverse().map((r) => ({
+    round: r.round,
+    a_attack: r.b_attack,
+    a_defend: r.b_defend,
+    b_attack: r.a_attack,
+    b_defend: r.a_defend,
+    a_damage: r.b_damage,
+    b_damage: r.a_damage,
+    a_blocked: r.b_blocked,
+    b_blocked: r.a_blocked,
+    a_hp_after: r.b_hp_after,
+    b_hp_after: r.a_hp_after,
+  }))
+})
+
 onMounted(() => {
   refresh()
   pollTimer = setInterval(refresh, 1500)
@@ -66,16 +85,8 @@ onUnmounted(() => {
         class="text-h6 text-center q-mb-md"
         :class="youWon ? 'text-positive' : battle.winner === 'forfeit_both' ? 'text-grey' : 'text-negative'"
       >
-        {{ battle.winner === 'forfeit_both' ? 'Оба не успели сходить — обоюдное поражение' : youWon ? 'Победа!' : 'Поражение' }}
+        {{ battle.winner === 'forfeit_both' ? '😴 Оба не успели сходить — обоюдное поражение' : youWon ? '🏆 Победа!' : '💀 Поражение' }}
       </div>
-
-      <q-list bordered separator class="q-mb-md" style="max-height: 260px; overflow-y: auto">
-        <q-item v-for="r in rounds" :key="r.round">
-          <q-item-section>
-            <q-item-label caption style="white-space: pre-line">{{ r.text }}</q-item-label>
-          </q-item-section>
-        </q-item>
-      </q-list>
 
       <div v-if="error" class="text-negative q-mb-md">{{ error }}</div>
 
@@ -86,7 +97,11 @@ onUnmounted(() => {
         <ZonePicker v-else :disabled="submitting" @submit="onSubmit" />
       </template>
 
-      <q-btn v-else color="primary" label="В меню" to="/" class="full-width" />
+      <q-btn v-else color="primary" label="В меню" to="/" class="full-width q-mb-md" />
+
+      <q-list v-if="rounds.length" bordered class="q-mt-md">
+        <RoundLogEntry v-for="r in roundsFromYourView" :key="r.round" :round="r" youLabel="Ты" oppLabel="Соперник" />
+      </q-list>
     </template>
   </q-page>
 </template>

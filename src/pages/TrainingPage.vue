@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useBattleStore } from '@/stores/battle'
 import HpBar from '@/components/HpBar.vue'
 import ZonePicker from '@/components/ZonePicker.vue'
+import RoundLogEntry from '@/components/RoundLogEntry.vue'
 
 const battle = useBattleStore()
 
@@ -27,7 +28,7 @@ function onSubmit(move) {
           <HpBar label="Ты" :hp="battle.current.a_hp" color="primary" />
         </div>
         <div class="col-6">
-          <HpBar :label="battle.current.model_b" :hp="battle.current.b_hp" color="negative" />
+          <HpBar label="Бот" :hp="battle.current.b_hp" color="negative" />
         </div>
       </div>
 
@@ -36,16 +37,8 @@ function onSubmit(move) {
         class="text-h6 text-center q-mb-md"
         :class="battle.current.winner === 'a' ? 'text-positive' : 'text-negative'"
       >
-        {{ battle.current.winner === 'a' ? 'Победа!' : battle.current.winner === 'draw' ? 'Ничья' : 'Поражение' }}
+        {{ battle.current.winner === 'a' ? '🏆 Победа!' : battle.current.winner === 'draw' ? '🤝 Ничья' : '💀 Поражение' }}
       </div>
-
-      <q-list bordered separator class="q-mb-md" style="max-height: 260px; overflow-y: auto">
-        <q-item v-for="r in battle.rounds" :key="r.round">
-          <q-item-section>
-            <q-item-label caption style="white-space: pre-line">{{ r.text }}</q-item-label>
-          </q-item-section>
-        </q-item>
-      </q-list>
 
       <div v-if="battle.error" class="text-negative q-mb-md">{{ battle.error }}</div>
 
@@ -59,9 +52,13 @@ function onSubmit(move) {
         v-else
         color="primary"
         label="Новый бой"
-        class="full-width"
+        class="full-width q-mb-md"
         @click="battle.startTraining()"
       />
+
+      <q-list v-if="battle.rounds.length" bordered class="q-mt-md">
+        <RoundLogEntry v-for="r in [...battle.rounds].reverse()" :key="r.round" :round="r" youLabel="Ты" oppLabel="Бот" />
+      </q-list>
     </template>
   </q-page>
 </template>
