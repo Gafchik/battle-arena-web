@@ -15,13 +15,13 @@ function winnerLabel(b) {
   if (b.status !== 'completed') return 'В процессе'
   if (b.winner === 'draw') return 'Ничья'
   if (b.winner === 'forfeit_both') return 'Оба сдались'
-  return b.winner === 'a' ? 'Победа' : 'Поражение'
+  return b.winner === b.your_side ? 'Победа' : 'Поражение'
 }
 
 function badgeColor(b) {
   if (b.status !== 'completed') return 'grey'
   if (b.winner === 'draw' || b.winner === 'forfeit_both') return 'grey-7'
-  return b.winner === 'a' ? 'positive' : 'negative'
+  return b.winner === b.your_side ? 'positive' : 'negative'
 }
 </script>
 

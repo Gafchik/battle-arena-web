@@ -102,9 +102,16 @@ onUnmounted(() => {
       <div
         v-if="battle.status === 'completed'"
         class="col-auto text-h6 text-center q-mb-md"
-        :class="youWon ? 'text-positive' : battle.winner === 'forfeit_both' ? 'text-grey' : 'text-negative'"
+        :class="{
+          'text-positive': youWon,
+          'text-grey': battle.winner === 'forfeit_both' || battle.winner === 'draw',
+          'text-negative': !youWon && battle.winner !== 'forfeit_both' && battle.winner !== 'draw',
+        }"
       >
-        {{ battle.winner === 'forfeit_both' ? '😴 Оба не успели сходить — обоюдное поражение' : youWon ? '🏆 Победа!' : '💀 Поражение' }}
+        <template v-if="battle.winner === 'forfeit_both'">😴 Оба не успели сходить — обоюдное поражение</template>
+        <template v-else-if="battle.winner === 'draw'">🤝 Ничья</template>
+        <template v-else-if="youWon">🏆 Победа!</template>
+        <template v-else>💀 Поражение</template>
       </div>
 
       <div v-if="error" class="col-auto text-negative q-mb-md">{{ error }}</div>
