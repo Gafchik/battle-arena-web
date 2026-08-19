@@ -1,1 +1,8 @@
 /* app global css */
+
+/* Telegram's WebView paints its own (often dark) background behind the page.
+   Without an explicit opaque background here, that shows through anywhere
+   our own components don't set their own background, breaking text contrast. */
+html, body, #q-app {
+  background: #fff;
+}
