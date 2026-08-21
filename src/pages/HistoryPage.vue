@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { api } from '@/services/api'
 
 const battles = ref([])
@@ -9,6 +9,17 @@ onMounted(async () => {
   const { battles: list } = await api.listBattles()
   battles.value = list
   loading.value = false
+})
+
+const stats = computed(() => {
+  const result = { wins: 0, losses: 0, draws: 0 }
+  for (const b of battles.value) {
+    if (b.status !== 'completed') continue
+    if (b.winner === 'draw' || b.winner === 'forfeit_both') result.draws++
+    else if (b.winner === b.your_side) result.wins++
+    else result.losses++
+  }
+  return result
 })
 
 function statusInfo(b) {
@@ -38,25 +49,72 @@ function modeInfo(b) {
       Пока нет боёв
     </div>
 
-    <div v-else class="history-list">
-      <router-link
-        v-for="b in battles"
-        :key="b.id"
-        :to="`/history/${b.id}`"
-        class="history-item ba-card"
-      >
-        <span class="history-item__icon">{{ modeInfo(b).icon }}</span>
-        <span class="history-item__body">
-          <span class="history-item__title">{{ modeInfo(b).text }}</span>
-          <span class="history-item__date">{{ new Date(b.created_at).toLocaleString() }}</span>
-        </span>
-        <span class="badge" :class="statusInfo(b).class">{{ statusInfo(b).text }}</span>
-      </router-link>
+    <div v-else>
+      <div class="stats-row">
+        <div class="stat-tile stat-tile--win">
+          <div class="stat-tile__value">{{ stats.wins }}</div>
+          <div class="stat-tile__label">Побед</div>
+        </div>
+        <div class="stat-tile stat-tile--loss">
+          <div class="stat-tile__value">{{ stats.losses }}</div>
+          <div class="stat-tile__label">Поражений</div>
+        </div>
+        <div class="stat-tile stat-tile--draw">
+          <div class="stat-tile__value">{{ stats.draws }}</div>
+          <div class="stat-tile__label">Ничьих</div>
+        </div>
+      </div>
+
+      <div class="history-list">
+        <router-link
+          v-for="b in battles"
+          :key="b.id"
+          :to="`/history/${b.id}`"
+          class="history-item ba-card"
+        >
+          <span class="history-item__icon">{{ modeInfo(b).icon }}</span>
+          <span class="history-item__body">
+            <span class="history-item__title">{{ modeInfo(b).text }}</span>
+            <span class="history-item__date">{{ new Date(b.created_at).toLocaleString() }}</span>
+          </span>
+          <span class="badge" :class="statusInfo(b).class">{{ statusInfo(b).text }}</span>
+        </router-link>
+      </div>
     </div>
   </q-page>
 </template>
 
 <style scoped>
+.stats-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.stat-tile {
+  flex: 1;
+  text-align: center;
+  padding: 10px 4px;
+  border-radius: var(--ba-radius-sm);
+  background: var(--ba-surface-2);
+}
+.stat-tile__value {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.stat-tile__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ba-ink-soft);
+  margin-top: 2px;
+}
+.stat-tile--win { background: #E6F8EE; }
+.stat-tile--win .stat-tile__value { color: var(--ba-win); }
+.stat-tile--loss { background: var(--ba-opp-soft); }
+.stat-tile--loss .stat-tile__value { color: var(--ba-opp); }
+.stat-tile--draw { background: var(--ba-surface-2); }
+.stat-tile--draw .stat-tile__value { color: var(--ba-ink-soft); }
+
 .history-list {
   display: flex;
   flex-direction: column;
