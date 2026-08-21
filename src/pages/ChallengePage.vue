@@ -109,27 +109,78 @@ onUnmounted(stopTimers)
 </script>
 
 <template>
-  <q-page class="q-pa-lg column items-center q-gutter-md">
+  <q-page class="q-pa-lg column items-center">
     <template v-if="expired">
-      <div class="text-center">Вызов никто не принял за 5 минут — ссылка больше не активна.</div>
-      <q-btn color="primary" label="Создать новый вызов" :loading="creating" @click="createChallenge" />
+      <div class="state-card ba-card q-pa-lg text-center">
+        <div class="state-card__emoji">⌛</div>
+        <div class="state-card__title">Вызов протух</div>
+        <div class="state-card__text">Никто не принял его за 5 минут — старая ссылка больше не работает.</div>
+        <q-btn color="accent" text-color="secondary" unelevated label="Создать новый вызов" :loading="creating" class="full-width q-mt-md" @click="createChallenge" />
+      </div>
     </template>
 
     <template v-else-if="battleId">
-      <div class="text-center">Вызов создан. Отправь ссылку другу.</div>
-      <q-btn color="positive" label="Отправить в Telegram" @click="shareLink" />
-      <q-spinner color="primary" size="32px" />
-      <div class="text-caption text-grey">Ждём соперника...</div>
-      <div v-if="secondsLeft !== null" class="text-caption text-grey">
-        Ссылка активна ещё {{ formatCountdown(secondsLeft) }} — если никто не зайдёт, она протухнет
+      <div class="state-card ba-card q-pa-lg text-center">
+        <div class="state-card__emoji">🤺</div>
+        <div class="state-card__title">Вызов создан</div>
+        <div class="state-card__text">Отправь ссылку другу — бой начнётся, как только он зайдёт.</div>
+
+        <q-btn color="accent" text-color="secondary" unelevated label="Отправить в Telegram" class="full-width q-mt-md" @click="shareLink" />
+
+        <div class="waiting-row q-mt-lg">
+          <q-spinner color="primary" size="20px" />
+          <span>Ждём соперника…</span>
+        </div>
+        <div v-if="secondsLeft !== null" class="countdown">
+          Ссылка активна ещё <b>{{ formatCountdown(secondsLeft) }}</b>
+        </div>
+
+        <q-btn flat dense color="negative" label="Отменить вызов" :loading="cancelling" class="q-mt-md" @click="cancelChallenge" />
+        <div v-if="error" class="text-negative q-mt-sm">{{ error }}</div>
       </div>
-      <q-btn flat color="negative" label="Отменить вызов" :loading="cancelling" @click="cancelChallenge" />
-      <div v-if="error" class="text-negative">{{ error }}</div>
     </template>
 
     <template v-else>
-      <q-spinner color="primary" size="32px" />
-      <div v-if="error" class="text-negative">{{ error }}</div>
+      <q-spinner color="primary" size="32px" class="q-mt-xl" />
+      <div v-if="error" class="text-negative q-mt-md">{{ error }}</div>
     </template>
   </q-page>
 </template>
+
+<style scoped>
+.state-card {
+  width: 100%;
+  max-width: 360px;
+  margin-top: 24px;
+}
+.state-card__emoji {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+.state-card__title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ba-ink);
+  margin-bottom: 4px;
+}
+.state-card__text {
+  font-size: 13px;
+  color: var(--ba-ink-soft);
+  line-height: 1.4;
+}
+
+.waiting-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ba-ink-soft);
+}
+
+.countdown {
+  font-size: 12.5px;
+  color: var(--ba-ink-soft);
+  margin-top: 6px;
+}
+</style>

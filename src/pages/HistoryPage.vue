@@ -11,17 +11,20 @@ onMounted(async () => {
   loading.value = false
 })
 
-function winnerLabel(b) {
-  if (b.status !== 'completed') return 'В процессе'
-  if (b.winner === 'draw') return 'Ничья'
-  if (b.winner === 'forfeit_both') return 'Оба сдались'
-  return b.winner === b.your_side ? 'Победа' : 'Поражение'
+function statusInfo(b) {
+  if (b.status === 'waiting_for_opponent') return { text: 'Ждёт соперника', class: 'badge--wait' }
+  if (b.status === 'in_progress') return { text: 'Идёт бой', class: 'badge--live' }
+  if (b.winner === 'draw') return { text: 'Ничья', class: 'badge--draw' }
+  if (b.winner === 'forfeit_both') return { text: 'Оба сдались', class: 'badge--draw' }
+  return b.winner === b.your_side
+    ? { text: 'Победа', class: 'badge--win' }
+    : { text: 'Поражение', class: 'badge--loss' }
 }
 
-function badgeColor(b) {
-  if (b.status !== 'completed') return 'grey'
-  if (b.winner === 'draw' || b.winner === 'forfeit_both') return 'grey-7'
-  return b.winner === b.your_side ? 'positive' : 'negative'
+function modeInfo(b) {
+  return b.mode === 'pve'
+    ? { icon: '🤖', text: 'Тренировка vs Бот' }
+    : { icon: '🤺', text: 'PvP' }
 }
 </script>
 
@@ -35,18 +38,70 @@ function badgeColor(b) {
       Пока нет боёв
     </div>
 
-    <q-list v-else bordered separator>
-      <q-item v-for="b in battles" :key="b.id" clickable :to="`/history/${b.id}`">
-        <q-item-section>
-          <q-item-label>{{ b.mode === 'pve' ? 'Тренировка vs Бот' : 'PvP' }}</q-item-label>
-          <q-item-label caption>{{ new Date(b.created_at).toLocaleString() }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-badge :color="badgeColor(b)">
-            {{ winnerLabel(b) }}
-          </q-badge>
-        </q-item-section>
-      </q-item>
-    </q-list>
+    <div v-else class="history-list">
+      <router-link
+        v-for="b in battles"
+        :key="b.id"
+        :to="`/history/${b.id}`"
+        class="history-item ba-card"
+      >
+        <span class="history-item__icon">{{ modeInfo(b).icon }}</span>
+        <span class="history-item__body">
+          <span class="history-item__title">{{ modeInfo(b).text }}</span>
+          <span class="history-item__date">{{ new Date(b.created_at).toLocaleString() }}</span>
+        </span>
+        <span class="badge" :class="statusInfo(b).class">{{ statusInfo(b).text }}</span>
+      </router-link>
+    </div>
   </q-page>
 </template>
+
+<style scoped>
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: inherit;
+}
+.history-item__icon {
+  font-size: 24px;
+  flex: none;
+}
+.history-item__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.history-item__title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ba-ink);
+}
+.history-item__date {
+  font-size: 11.5px;
+  color: var(--ba-ink-soft);
+  margin-top: 1px;
+}
+
+.badge {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+}
+.badge--win { background: #E6F8EE; color: var(--ba-win); }
+.badge--loss { background: var(--ba-opp-soft); color: var(--ba-opp); }
+.badge--draw { background: var(--ba-surface-2); color: var(--ba-ink-soft); }
+.badge--live { background: var(--ba-block-soft); color: #B8760B; }
+.badge--wait { background: var(--ba-you-soft); color: var(--ba-you); }
+</style>
