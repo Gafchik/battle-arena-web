@@ -11,10 +11,10 @@ const props = defineProps({
 
 // Each side's outcome is driven by the *other* side's attack against its
 // own defence — that's what actually happened to them this round.
-const you = computed(() => outcomeFor('a', 'b'))
-const opp = computed(() => outcomeFor('b', 'a'))
+const you = computed(() => outcomeFor('a', 'b', props.oppLabel))
+const opp = computed(() => outcomeFor('b', 'a', props.youLabel))
 
-function outcomeFor(mine, theirs) {
+function outcomeFor(mine, theirs, theirsLabel) {
   const round = props.round
   const myAttack = round[`${mine}_attack`]
   const myDefend = round[`${mine}_defend`]
@@ -25,11 +25,11 @@ function outcomeFor(mine, theirs) {
 
   let result
   if (theirAttack === null) {
-    result = { kind: 'idle', text: 'Соперник не атаковал', tone: 'idle' }
+    result = { kind: 'idle', text: `${theirsLabel} не атаковал(а)`, tone: 'idle' }
   } else if (wasBlocked) {
-    result = { kind: 'block', text: `Блок пробит — −${damageTaken} HP`, tone: 'block' }
+    result = { kind: 'block', text: `Заблокировал(а) частично — получил(а) −${damageTaken} HP`, tone: 'block' }
   } else {
-    result = { kind: 'hit', text: `Попадание — −${damageTaken} HP`, tone: 'hit' }
+    result = { kind: 'hit', text: `Получил(а) удар — −${damageTaken} HP`, tone: 'hit' }
   }
 
   return {
@@ -41,7 +41,7 @@ function outcomeFor(mine, theirs) {
   }
 }
 
-const RESULT_ICON = { idle: '—', block: '🛡️', hit: '💥' }
+const RESULT_ICON = { idle: '—', block: '🛡️', hit: '💢' }
 </script>
 
 <template>

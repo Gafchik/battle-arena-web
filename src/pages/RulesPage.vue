@@ -34,11 +34,22 @@ import { ZONES } from '@/services/zones'
       </div>
     </div>
 
-    <div class="rule-step ba-card q-pa-md">
+    <div class="rule-step ba-card q-pa-md q-mb-md">
       <div class="rule-step__num">3</div>
       <div>
         <div class="rule-step__title">Победа</div>
         <div class="rule-step__text">У каждого бойца <b>100 HP</b>. Бой идёт до тех пор, пока у кого-то не закончится HP.</div>
+      </div>
+    </div>
+
+    <div class="rule-step ba-card q-pa-md">
+      <div class="rule-step__num">4</div>
+      <div>
+        <div class="rule-step__title">Время на ход — только PvP</div>
+        <div class="rule-step__text">
+          На выбор атаки и защиты даётся <b>60 секунд</b>. Не успел — твой удар не засчитывается, а защита считается пустой: следующая атака соперника пройдёт без блока.
+          Если за 60 секунд <b>не сходили оба</b> — бой сразу заканчивается обоюдным поражением, независимо от HP.
+        </div>
       </div>
     </div>
   </q-page>
